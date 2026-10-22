@@ -107,6 +107,7 @@ console.log(verdictKeseluruhan(['wajar','kemahalan'])); // 'DITEMBAK!'
 
 ## Link
 
+- **Live: https://daily-bengkel-check.vercel.app** (deploy Vercel 2026-10-22 atas ACC Junan; terverifikasi HTTP 200 + konten)
 - Hasil: web artifact `bengkelcheck` (dibangun 2026-10-22; dibuka lewat app Muse)
 - Repo: https://github.com/junanda24/daily-bengkel-check
 - Tanggal rilis: 2026-10-22
@@ -126,5 +127,7 @@ console.log(verdictKeseluruhan(['wajar','kemahalan'])); // 'DITEMBAK!'
 - **Verifikasi**: 22/22 uji logika Node hijau (DB 25 item valid, ambang batas
   verdict, agregasi, format Rupiah); scan bersih: tanpa lorem/TODO, tanpa emoji
   di label, tanpa fetch runtime, `prefers-reduced-motion` dihormati.
-- Keputusan deploy: TIDAK deploy ke Vercel (menunggu ACC Junan, sesuai aturan
-  program). Tidak publish ke mana pun.
+- Keputusan deploy: awalnya tidak di-deploy (aturan program: Vercel hanya atas
+  ACC Junan). Junan memberi ACC pada 2026-10-22 → live di
+  https://daily-bengkel-check.vercel.app (project Vercel `daily-bengkel-check`,
+  SSO protection dimatikan agar publik bisa membuka).
