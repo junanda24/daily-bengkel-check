@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <title>BengkelCheck</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #16130f;
+        --bg-2: #1e1a15;
+        --panel: #221d17;
+        --line: #37302a;
+        --ink: #f3ede4;
+        --ink-dim: #b8ad9e;
+        --orange: #ff6b1a;
+        --orange-dark: #c24e0e;
+        --paper: #faf7f0;
+        --paper-ink: #211a12;
+        --paper-dim: #6f6455;
+        --green: #1a7f37;
+        --amber: #b45309;
+        --red: #c81e1e;
+        --blue: #1d6fb8;
+        --mono: "JetBrains Mono", ui-monospace, monospace;
+        --sans: "Plus Jakarta Sans", system-ui, sans-serif;
+        --display: "Archivo Black", "Plus Jakarta Sans", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; scroll-padding-bottom: 280px; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .app {
+        max-width: 480px;
+        margin: 0 auto;
+        height: 100vh;
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+      }
+      .wrap {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 20px 16px 40px;
+        scrollbar-width: thin;
+      }
+      .dock {
+        flex: none;
+        padding: 12px 16px 16px;
+        background: var(--bg);
+      }
+      button { font-family: inherit; cursor: pointer; }
+      :focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+
+      /* ---------- HERO ---------- */
+      .hero { padding: 8px 0 4px; }
+      .hero h1 {
+        font-family: var(--display);
+        font-size: clamp(34px, 10.5vw, 42px);
+        line-height: 1;
+        margin: 0;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+      .hero h1 .ck { color: var(--orange); }
+      .tagline {
+        margin: 10px 0 0;
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .tagline b { color: var(--orange); font-weight: 800; }
+      .hero-sub {
+        margin: 6px 0 0;
+        color: var(--ink-dim);
+        font-size: 13.5px;
+      }
+
+      /* ---------- MOTOR PICKER ---------- */
+      .motor-label {
+        margin: 22px 0 10px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.6px;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+      }
+      .motor-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .motor-card {
+        background: var(--panel);
+        border: 2px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 8px 10px;
+        color: var(--ink);
+        text-align: center;
+        transition: border-color 0.15s ease, background 0.15s ease;
+      }
+      .motor-card svg { display: block; margin: 0 auto 6px; }
+      .motor-card .m-name { display: block; font-weight: 800; font-size: 15px; }
+      .motor-card .m-eg { display: block; font-size: 10.5px; color: var(--ink-dim); margin-top: 2px; line-height: 1.35; }
+      .motor-card[aria-pressed="true"] {
+        border-color: var(--orange);
+        background: #2b2019;
+      }
+      .motor-card[aria-pressed="true"] .m-name { color: var(--orange); }
+
+      /* ---------- TABS ---------- */
+      .tabs {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        background: var(--bg-2);
+        border: 2px solid var(--line);
+        border-radius: 12px;
+        padding: 4px;
+        margin: 24px 0 20px;
+      }
+      .tab-thumb {
+        position: absolute;
+        top: 4px; bottom: 4px; left: 4px;
+        width: calc(50% - 4px);
+        background: var(--orange);
+        border-radius: 8px;
+        transition: transform 0.28s cubic-bezier(0.3, 1.2, 0.4, 1);
+      }
+      .tabs[data-active="tagihan"] .tab-thumb { transform: translateX(100%); }
+      .tab-btn {
+        position: relative;
+        z-index: 1;
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        padding: 12px 6px;
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--ink-dim);
+        transition: color 0.2s ease;
+      }
+      .tab-btn[aria-selected="true"] { color: #1c130b; }
+      .tab-btn .tab-sub { display: block; font-size: 11px; font-weight: 600; opacity: 0.85; margin-top: 1px; }
+
+      /* ---------- CATALOG ---------- */
+      .cat-title {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin: 22px 0 10px;
+        font-family: var(--display);
+        font-size: 15px;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+      }
+      .cat-title::after {
+        content: "";
+        flex: 1;
+        border-top: 2px dashed var(--line);
+        transform: translateY(-4px);
+      }
+      .cat-title .cat-count { font-family: var(--mono); font-size: 11px; color: var(--orange); letter-spacing: 0; }
+      .svc-list { display: grid; gap: 8px; }
+      .svc-card {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        background: var(--panel);
+        border: 2px solid var(--line);
+        border-radius: 10px;
+        padding: 12px;
+        cursor: pointer;
+        transition: border-color 0.15s ease, background 0.15s ease;
+      }
+      .svc-card input[type="checkbox"] {
+        appearance: none;
+        flex: none;
+        width: 24px; height: 24px;
+        margin: 1px 0 0;
+        border: 2px solid var(--ink-dim);
+        border-radius: 6px;
+        background: transparent;
+        display: grid;
+        place-content: center;
+        cursor: pointer;
+      }
+      .svc-card input[type="checkbox"]::before {
+        content: "";
+        width: 13px; height: 13px;
+        background: #1c130b;
+        transform: scale(0);
+        transition: transform 0.12s ease;
+        clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+      }
+      .svc-card input[type="checkbox"]:checked { background: var(--orange); border-color: var(--orange); }
+      .svc-card input[type="checkbox"]:checked::before { transform: scale(1); }
+      .svc-card:has(input:checked) { border-color: var(--orange); background: #2b2019; }
+      .svc-body { flex: 1; min-width: 0; }
+      .svc-name { font-weight: 700; font-size: 15px; }
+      .svc-range { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--orange); margin-top: 1px; }
+      .svc-card:has(input:checked) .svc-range { color: #ffa26b; }
+      .svc-note { font-size: 12.5px; color: var(--ink-dim); margin-top: 2px; }
+
+      /* ---------- RECEIPT (STRUK) ---------- */
+      .receipt-zone { margin-top: 0; }
+      .receipt {
+        position: relative;
+        background: var(--paper);
+        color: var(--paper-ink);
+        padding: 16px 16px 14px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+      }
+      .receipt::before,
+      .receipt::after {
+        content: "";
+        position: absolute;
+        left: 0; right: 0;
+        height: 7px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='7'%3E%3Cpath d='M0 7 L7 0 L14 7 Z' fill='%23faf7f0'/%3E%3C/svg%3E");
+        background-repeat: repeat-x;
+        background-size: 14px 7px;
+      }
+      .receipt::before { top: -7px; }
+      .receipt::after { bottom: -7px; transform: rotate(180deg); }
+      .receipt-head {
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 2px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .receipt-head small { display: block; letter-spacing: 0.5px; font-weight: 500; color: var(--paper-dim); margin-top: 2px; text-transform: none; }
+      .receipt-rule { border-top: 2px dashed #c9bfa9; margin: 10px 0; }
+      .receipt-empty { text-align: center; color: var(--paper-dim); font-size: 13.5px; padding: 4px 6px 6px; }
+      .receipt-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        font-size: 13.5px;
+        margin: 5px 0;
+      }
+      .receipt-row .r-label { color: var(--paper-dim); font-weight: 600; }
+      .receipt-row .r-val { font-family: var(--mono); font-weight: 700; text-align: right; white-space: nowrap; }
+      .receipt-row.total .r-label { color: var(--paper-ink); font-weight: 800; font-size: 14.5px; }
+      .receipt-row.total .r-val { font-size: 17px; }
+      .receipt-count { font-size: 12.5px; color: var(--paper-dim); margin-top: 2px; }
+      .copy-btn {
+        width: 100%;
+        margin-top: 12px;
+        background: var(--paper-ink);
+        color: var(--paper);
+        border: 0;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 14.5px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: background 0.15s ease;
+      }
+      .copy-btn:active { background: var(--orange-dark); }
+      .copy-btn.done { background: var(--green); }
+
+      /* ---------- STAMP ---------- */
+      .stamp-zone { display: flex; justify-content: center; padding: 12px 0 4px; min-height: 10px; }
+      .stamp {
+        font-family: var(--display);
+        font-size: 30px;
+        letter-spacing: 1px;
+        padding: 6px 18px 8px;
+        border: 4px double currentColor;
+        border-radius: 6px;
+        transform: rotate(-8deg);
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .stamp.wajar { color: var(--green); }
+      .stamp.waspada { color: var(--amber); }
+      .stamp.ditembak { color: var(--red); }
+      .stamp small { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-align: center; margin-top: 2px; }
+      @keyframes stampIn {
+        0% { transform: scale(2.2) rotate(-24deg); opacity: 0; }
+        60% { opacity: 1; }
+        100% { transform: scale(1) rotate(-8deg); opacity: 1; }
+      }
+      .stamp.animate { animation: stampIn 0.35s cubic-bezier(0.2, 2.4, 0.4, 1) both; }
+
+      /* ---------- BILL MODE ---------- */
+      .bill-form {
+        background: var(--panel);
+        border: 2px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+        display: grid;
+        gap: 10px;
+      }
+      .bill-form label { font-size: 12px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-dim); display: block; margin-bottom: 5px; }
+      .bill-form select,
+      .bill-form input {
+        width: 100%;
+        background: var(--bg);
+        border: 2px solid var(--line);
+        border-radius: 8px;
+        color: var(--ink);
+        font-family: inherit;
+        font-size: 15px;
+        padding: 11px 12px;
+      }
+      .bill-form input { font-family: var(--mono); font-weight: 700; }
+      .bill-form select:focus,
+      .bill-form input:focus { border-color: var(--orange); outline: none; }
+      .price-wrap { position: relative; }
+      .price-wrap .rp {
+        position: absolute;
+        left: 12px; top: 50%;
+        transform: translateY(-50%);
+        font-family: var(--mono);
+        font-weight: 700;
+        color: var(--ink-dim);
+        pointer-events: none;
+      }
+      .price-wrap input { padding-left: 40px; }
+      .add-btn {
+        background: var(--orange);
+        color: #1c130b;
+        border: 0;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 15px;
+        font-weight: 800;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+      }
+      .add-btn:active { background: var(--orange-dark); color: #fff; }
+      .form-err { color: #ff8a5c; font-size: 13px; font-weight: 600; display: none; }
+      .form-err.show { display: block; }
+
+      .bill-list { display: grid; gap: 8px; margin-top: 14px; }
+      .bill-item {
+        background: var(--panel);
+        border: 2px solid var(--line);
+        border-radius: 10px;
+        padding: 11px 12px;
+      }
+      .bill-top { display: flex; align-items: flex-start; gap: 10px; }
+      .bill-name { flex: 1; font-weight: 700; font-size: 14.5px; min-width: 0; }
+      .bill-price { font-family: var(--mono); font-weight: 700; font-size: 15px; white-space: nowrap; }
+      .bill-del {
+        flex: none;
+        background: transparent;
+        border: 2px solid var(--line);
+        border-radius: 7px;
+        color: var(--ink-dim);
+        width: 30px; height: 30px;
+        display: grid; place-content: center;
+        padding: 0;
+      }
+      .bill-del:active { border-color: var(--red); color: var(--red); }
+      .bill-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 7px; }
+      .bill-fair { font-family: var(--mono); font-size: 11.5px; color: var(--ink-dim); }
+      .badge {
+        font-size: 10.5px;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1.5px solid currentColor;
+        text-transform: uppercase;
+      }
+      @keyframes pop {
+        0% { transform: scale(0.4); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      .badge.pop { animation: pop 0.22s cubic-bezier(0.2, 2, 0.4, 1) both; }
+      .badge.murah { color: #7db8ec; }
+      .badge.wajar { color: #6fce8b; }
+      .badge.agak { color: #f2b04a; }
+      .badge.mahal { color: #ff7a6b; }
+      .bill-note { font-size: 12.5px; color: var(--ink-dim); margin-top: 6px; }
+
+      /* ---------- TIPS & FOOTER ---------- */
+      .tips { margin-top: 34px; }
+      .tips h2, .section-h {
+        font-family: var(--display);
+        font-size: 19px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0 0 6px;
+      }
+      .tips h2 .ck, .section-h .ck { color: var(--orange); }
+      .tips-sub { color: var(--ink-dim); font-size: 13.5px; margin: 0 0 14px; }
+      .tip-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; counter-reset: tip; }
+      .tip-list li {
+        background: var(--panel);
+        border: 2px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 12px 12px 14px;
+        display: flex;
+        gap: 12px;
+        font-size: 14px;
+      }
+      .tip-num {
+        flex: none;
+        font-family: var(--display);
+        font-size: 17px;
+        color: var(--orange);
+        line-height: 1.3;
+      }
+      .tip-list b { font-weight: 800; }
+      footer {
+        margin-top: 36px;
+        border-top: 2px dashed var(--line);
+        padding-top: 16px;
+        color: var(--ink-dim);
+        font-size: 12.5px;
+      }
+      footer .credit { margin-top: 10px; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-dim); }
+      footer .credit b { color: var(--orange); }
+
+      [hidden] { display: none !important; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .stamp.animate, .badge.pop { animation: none; }
+        .tab-thumb, .svc-card, .motor-card { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+   <div class="app">
+    <div class="wrap" id="scrollArea">
+      <!-- HERO -->
+      <header class="hero">
+        <h1>Bengkel<span class="ck">Check</span></h1>
+        <p class="tagline">Cek harga wajar servis motor. <b>Biar nggak ditembak.</b></p>
+        <p class="hero-sub">Pilih motormu, rakit estimasi sebelum ke bengkel — atau cek tagihan yang sudah kamu bayar.</p>
+
+        <p class="motor-label" id="motorLabel">Motor kamu</p>
+        <div class="motor-grid" role="group" aria-labelledby="motorLabel">
+          <button type="button" class="motor-card" data-motor="matic" aria-pressed="false">
+            <svg width="62" height="40" viewBox="0 0 64 44" fill="none" stroke="#ff6b1a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="13" cy="33" r="7" />
+              <circle cx="52" cy="33" r="7" />
+              <path d="M13 33 L24 33 L27 24 L38 24" />
+              <path d="M45 33 L49 16 L54 12" />
+              <path d="M49 16 L44 26 L45 33" />
+              <path d="M24 21 L37 21" />
+              <path d="M20 33 L27 24" />
+            </svg>
+            <span class="m-name">Matic</span>
+            <span class="m-eg">Beat, Vario, NMAX</span>
+          </button>
+          <button type="button" class="motor-card" data-motor="bebek" aria-pressed="false">
+            <svg width="62" height="40" viewBox="0 0 64 44" fill="none" stroke="#ff6b1a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="13" cy="33" r="7" />
+              <circle cx="52" cy="33" r="7" />
+              <path d="M13 33 L28 33 L36 22 L45 22 L52 33" />
+              <path d="M45 22 L49 13 L55 11" />
+              <path d="M22 19 L36 19 L36 22" />
+              <path d="M28 33 L33 25" />
+            </svg>
+            <span class="m-name">Bebek</span>
+            <span class="m-eg">Supra, Jupiter, Revo</span>
+          </button>
+          <button type="button" class="motor-card" data-motor="sport" aria-pressed="false">
+            <svg width="62" height="40" viewBox="0 0 64 44" fill="none" stroke="#ff6b1a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="13" cy="33" r="7" />
+              <circle cx="52" cy="33" r="7" />
+              <path d="M13 33 L27 33 L36 19 L47 19 L52 33" />
+              <path d="M47 19 L51 12 L57 11" />
+              <path d="M27 33 L20 21 L11 18" />
+              <path d="M30 26 L44 26" />
+            </svg>
+            <span class="m-name">Sport</span>
+            <span class="m-eg">CBR, R15, GSX-R</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TABS -->
+      <div class="tabs" id="tabs" data-active="estimasi" role="tablist" aria-label="Mode BengkelCheck">
+        <div class="tab-thumb" aria-hidden="true"></div>
+        <button type="button" class="tab-btn" id="tabEstimasi" role="tab" aria-selected="true" data-mode="estimasi">
+          Rakit Estimasi
+          <span class="tab-sub">sebelum ke bengkel</span>
+        </button>
+        <button type="button" class="tab-btn" id="tabTagihan" role="tab" aria-selected="false" data-mode="tagihan">
+          Cek Tagihan
+          <span class="tab-sub">sesudah dari bengkel</span>
+        </button>
+      </div>
+
+      <!-- MODE: RAKIT ESTIMASI -->
+      <section id="modeEstimasi" role="tabpanel" aria-labelledby="tabEstimasi">
+        <div id="katalog"></div>
+
+        <div class="receipt-zone" id="receiptEst">
+          <div class="receipt" aria-live="polite">
+            <div class="receipt-head">
+              BengkelCheck
+              <small>Estimasi harga wajar &middot; <span id="estMotorLabel">Matic</span></small>
+            </div>
+            <div class="receipt-rule"></div>
+            <div id="estEmpty" class="receipt-empty">Centang dulu servis yang kamu butuhkan.</div>
+            <div id="estBody" hidden>
+              <div class="receipt-row total">
+                <span class="r-label">Total wajar</span>
+                <span class="r-val" id="estTotal">Rp0 – Rp0</span>
+              </div>
+              <p class="receipt-count" id="estCount"></p>
+              <div class="receipt-rule"></div>
+              <p class="receipt-empty" style="padding:0;text-align:left;">Bawa angka ini ke bengkel. Kalau penawarannya jauh di atas batas atas, nego atau pindah bengkel.</p>
+            </div>
+            <button type="button" class="copy-btn" id="btnSalinBekal" hidden>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Salin bekal</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODE: CEK TAGIHAN -->
+      <section id="modeTagihan" role="tabpanel" aria-labelledby="tabTagihan" hidden>
+        <form class="bill-form" id="billForm" novalidate>
+          <div>
+            <label for="billSelect">Layanan di struk kamu</label>
+            <select id="billSelect"></select>
+          </div>
+          <div>
+            <label for="billPrice">Harga yang ditagih</label>
+            <div class="price-wrap">
+              <span class="rp">Rp</span>
+              <input id="billPrice" type="text" inputmode="numeric" autocomplete="off" aria-describedby="billErr" />
+            </div>
+          </div>
+          <p class="form-err" id="billErr" role="alert"></p>
+          <button type="submit" class="add-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Tambah ke daftar
+          </button>
+        </form>
+
+        <div class="bill-list" id="billList"></div>
+
+        <div class="receipt-zone" id="receiptBill">
+          <div class="receipt" aria-live="polite">
+            <div class="receipt-head">
+              BengkelCheck
+              <small>Hasil cek tagihan &middot; <span id="billMotorLabel">Matic</span></small>
+            </div>
+            <div class="receipt-rule"></div>
+            <div id="billEmpty" class="receipt-empty">Tambah dulu baris dari struk bengkelmu, nanti ketahuan ditembak atau nggak.</div>
+            <div id="billBody" hidden>
+              <div class="receipt-row">
+                <span class="r-label">Total ditagih</span>
+                <span class="r-val" id="billTotal">Rp0</span>
+              </div>
+              <div class="receipt-row">
+                <span class="r-label">Rentang wajar</span>
+                <span class="r-val" id="billFair">Rp0 – Rp0</span>
+              </div>
+              <div class="stamp-zone" id="stampZone"></div>
+            </div>
+            <button type="button" class="copy-btn" id="btnSalinHasil" hidden>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Salin hasil</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- BEKAL NEGO -->
+      <section class="tips" aria-labelledby="tipsTitle">
+        <h2 id="tipsTitle">Bekal <span class="ck">Nego</span></h2>
+        <p class="tips-sub">Lima hal yang bikin kamu nggak gampang dikerjain di meja kasir bengkel.</p>
+        <ol class="tip-list">
+          <li><span class="tip-num">1</span><span><b>Minta rincian part vs jasa.</b> Struk yang cuma nulis total itu lampu kuning. Minta dipecah: harga part berapa, jasanya berapa.</span></li>
+          <li><span class="tip-num">2</span><span><b>Tanya part-nya ori atau KW.</b> Selisih harga part ori dan KW bisa dua kali lipat. Nggak masalah pakai KW, asal harganya juga harga KW.</span></li>
+          <li><span class="tip-num">3</span><span><b>Bandingkan minimal 2 bengkel.</b> Buat servis besar, tanya estimasi tertulis dulu sebelum motor dibongkar. Yang nolak ngasih estimasi, tinggalin.</span></li>
+          <li><span class="tip-num">4</span><span><b>Servis rutin lebih murah daripada benerin yang jebol.</b> Oli telat ganti bisa berakhir turun mesin. Murahnya nunda servis itu ilusi.</span></li>
+          <li><span class="tip-num">5</span><span><b>Foto struknya, cek di sini sebelum bayar.</b> Masih di bengkel, masih bisa nego. Kalau sudah pulang, cuma bisa nyesel.</span></li>
+        </ol>
+      </section>
+
+      <footer>
+        <p>Harga adalah estimasi Jabodetabek 2026 untuk bengkel umum. Bengkel resmi/part ori bisa 20–40% lebih tinggi dan harga tiap daerah beda. Hasil ini bahan negosiasi, bukan vonis.</p>
+        <p class="credit">Bengkel<b>Check</b> &middot; Program 1 Hari 1 Project</p>
+      </footer>
+    </div>
+    <div class="dock" id="dock"></div>
+   </div>
+
+    <script>
+      "use strict";
+
+      /* ================= DATA ================= */
+      var SEMUA = ["matic", "bebek", "sport"];
+      var BENGKEL_DB = [
+        /* Rutin */
+        { id: "ganti-oli-mesin", nama: "Ganti oli mesin", kategori: "Rutin", min: 45000, max: 90000, untuk: SEMUA, catatan: "Oli + jasa. Tiap 2.000–3.000 km." },
+        { id: "oli-gardan", nama: "Oli gardan", kategori: "Rutin", min: 20000, max: 40000, untuk: ["matic"], catatan: "Khusus matic." },
+        { id: "servis-ringan", nama: "Servis ringan", kategori: "Rutin", min: 60000, max: 120000, untuk: SEMUA, catatan: "Pembersihan + setelan ringan." },
+        { id: "tune-up", nama: "Tune up", kategori: "Rutin", min: 120000, max: 250000, untuk: SEMUA, catatan: "Cek menyeluruh tiap ±12.000 km." },
+        { id: "infus-injeksi", nama: "Infus injeksi", kategori: "Rutin", min: 80000, max: 150000, untuk: SEMUA, catatan: "Buat motor injeksi." },
+        /* CVT */
+        { id: "servis-cvt", nama: "Servis CVT", kategori: "CVT", min: 80000, max: 150000, untuk: ["matic"], catatan: "Jasa bongkar + bersihkan. Tiap ±10.000 km." },
+        { id: "v-belt", nama: "V-belt", kategori: "CVT", min: 150000, max: 350000, untuk: ["matic"], catatan: "Part + jasa. Umur ±20–25 rb km." },
+        { id: "roller-set", nama: "Roller set", kategori: "CVT", min: 80000, max: 200000, untuk: ["matic"], catatan: "Part + jasa." },
+        { id: "kampas-ganda", nama: "Kampas ganda", kategori: "CVT", min: 150000, max: 300000, untuk: ["matic"], catatan: "Part + jasa." },
+        /* Rantai */
+        { id: "rantai-gear-set", nama: "Rantai + gear set", kategori: "Rantai", min: 150000, max: 300000, untuk: ["bebek", "sport"], catatan: "Part + jasa." },
+        /* Rem */
+        { id: "kampas-rem-depan", nama: "Kampas rem depan", kategori: "Rem", min: 50000, max: 120000, untuk: SEMUA, catatan: "Cakram. Part + jasa." },
+        { id: "kampas-rem-belakang", nama: "Kampas rem belakang", kategori: "Rem", min: 40000, max: 100000, untuk: SEMUA, catatan: "Tromol. Part + jasa." },
+        { id: "kuras-minyak-rem", nama: "Kuras minyak rem", kategori: "Rem", min: 30000, max: 60000, untuk: SEMUA, catatan: "Jasa + minyak." },
+        /* Kelistrikan */
+        { id: "aki", nama: "Aki", kategori: "Kelistrikan", min: 180000, max: 350000, untuk: SEMUA, catatan: "Tipe standar. Umur ±2 tahun." },
+        { id: "busi", nama: "Busi", kategori: "Kelistrikan", min: 20000, max: 45000, untuk: SEMUA, catatan: "Part + jasa." },
+        { id: "lampu-depan", nama: "Lampu depan", kategori: "Kelistrikan", min: 20000, max: 80000, untuk: SEMUA, catatan: "Bohlam murah, LED lebih mahal." },
+        /* Ban & kaki */
+        { id: "ban-luar-depan", nama: "Ban luar depan", kategori: "Ban & kaki", min: 200000, max: 450000, untuk: SEMUA, catatan: "Tergantung ukuran & merek." },
+        { id: "ban-luar-belakang", nama: "Ban luar belakang", kategori: "Ban & kaki", min: 250000, max: 500000, untuk: SEMUA, catatan: "Tergantung ukuran & merek." },
+        { id: "tambal-tubeless", nama: "Tambal tubeless", kategori: "Ban & kaki", min: 20000, max: 40000, untuk: SEMUA, catatan: "Per titik." },
+        { id: "shockbreaker-belakang", nama: "Shockbreaker belakang", kategori: "Ban & kaki", min: 200000, max: 450000, untuk: SEMUA, catatan: "Per batang, part + jasa." },
+        { id: "komstir", nama: "Komstir", kategori: "Ban & kaki", min: 100000, max: 250000, untuk: SEMUA, catatan: "Part + jasa." },
+        /* Mesin */
+        { id: "turun-mesin", nama: "Turun mesin / overhaul", kategori: "Mesin", min: 600000, max: 1500000, untuk: SEMUA, catatan: "Jasa + part ringan; bisa lebih bila banyak part." },
+        /* Lainnya */
+        { id: "filter-udara", nama: "Filter udara", kategori: "Lainnya", min: 30000, max: 70000, untuk: SEMUA, catatan: "Part + jasa." },
+        { id: "kabel-gas-kopling", nama: "Kabel gas / kopling", kategori: "Lainnya", min: 30000, max: 80000, untuk: SEMUA, catatan: "Part + jasa." },
+        { id: "cuci-steam", nama: "Cuci steam", kategori: "Lainnya", min: 15000, max: 30000, untuk: SEMUA, catatan: "Cuci luar + steam. Motor bersih sekalian." }
+      ];
+      var KATEGORI_URUTAN = ["Rutin", "CVT", "Rantai", "Rem", "Kelistrikan", "Ban & kaki", "Mesin", "Lainnya"];
+      var MOTOR_LABEL = { matic: "Matic", bebek: "Bebek", sport: "Sport" };
+
+      /* ================= MESIN VERDICT (fungsi murni, tanpa DOM) ================= */
+      function nilaiKewajaran(harga, min, max) {
+        if (harga < 0.6 * min) return "murah-mencurigakan";
+        if (harga <= max) return "wajar";
+        if (harga <= 1.3 * max) return "agak-mahal";
+        return "kemahalan";
+      }
+      function verdictKeseluruhan(daftarNilai) {
+        if (daftarNilai.indexOf("kemahalan") !== -1) return "DITEMBAK!";
+        if (daftarNilai.indexOf("agak-mahal") !== -1) return "WASPADA";
+        return "WAJAR";
+      }
+      var VERDICT_INFO = {
+        "murah-mencurigakan": { label: "MURAH BANGET", kelas: "murah", note: "Pastikan part-nya asli." },
+        "wajar": { label: "WAJAR", kelas: "wajar", note: "Masih di dalam rentang harga wajar." },
+        "agak-mahal": { label: "AGAK MAHAL", kelas: "agak", note: "Masih masuk akal kalau bengkel resmi / part ori." },
+        "kemahalan": { label: "KEMAHALAN", kelas: "mahal", note: "Di atas batas wajar lebih dari 30%. Tanya rinciannya, nego, atau komplain." }
+      };
+
+      /* ================= FORMAT ================= */
+      var nfID = new Intl.NumberFormat("id-ID");
+      function rp(n) { return "Rp" + nfID.format(Math.round(n)); }
+      function rpRange(min, max) { return rp(min) + " – " + rp(max); }
+      function parseRupiah(str) {
+        var digits = String(str == null ? "" : str).replace(/[^\d]/g, "");
+        if (!digits) return NaN;
+        var n = parseInt(digits, 10);
+        return isNaN(n) ? NaN : n;
+      }
+
+      /* ================= STATE ================= */
+      var MOTOR_KEY = "bengkelcheck.motor";
+      var state = {
+        motor: "matic",
+        dipilih: {},     /* id -> true (mode estimasi) */
+        tagihan: []      /* {id, harga} (mode cek tagihan) */
+      };
+      try {
+        var saved = window.localStorage.getItem(MOTOR_KEY);
+        if (saved && MOTOR_LABEL[saved]) state.motor = saved;
+      } catch (e) { /* storage tidak tersedia: tetap jalan */ }
+
+      function itemById(id) {
+        for (var i = 0; i < BENGKEL_DB.length; i++) if (BENGKEL_DB[i].id === id) return BENGKEL_DB[i];
+        return null;
+      }
+      function itemUntukMotor() {
+        return BENGKEL_DB.filter(function (it) { return it.untuk.indexOf(state.motor) !== -1; });
+      }
+
+      /* ================= ELEMEN ================= */
+      function el(id) { return document.getElementById(id); }
+      var katalogEl = el("katalog");
+      var billSelect = el("billSelect");
+      var billPrice = el("billPrice");
+      var billErr = el("billErr");
+      var billList = el("billList");
+      var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      /* ================= MOTOR PICKER ================= */
+      var motorCards = Array.prototype.slice.call(document.querySelectorAll(".motor-card"));
+      function renderMotor() {
+        motorCards.forEach(function (card) {
+          card.setAttribute("aria-pressed", card.getAttribute("data-motor") === state.motor ? "true" : "false");
+        });
+        el("estMotorLabel").textContent = MOTOR_LABEL[state.motor];
+        el("billMotorLabel").textContent = MOTOR_LABEL[state.motor];
+      }
+      motorCards.forEach(function (card) {
+        card.addEventListener("click", function () {
+          state.motor = card.getAttribute("data-motor");
+          try { window.localStorage.setItem(MOTOR_KEY, state.motor); } catch (e) {}
+          renderMotor();
+          renderKatalog();
+          renderBillSelect();
+          /* baris tagihan yang tidak berlaku untuk motor baru dibuang */
+          state.tagihan = state.tagihan.filter(function (row) {
+            var it = itemById(row.id);
+            return it && it.untuk.indexOf(state.motor) !== -1;
+          });
+          renderTagihan(false);
+          updateEstimasi(true);
+        });
+      });
+
+      /* ================= TABS ================= */
+      var tabsEl = el("tabs");
+      function setMode(mode) {
+        tabsEl.setAttribute("data-active", mode);
+        el("tabEstimasi").setAttribute("aria-selected", mode === "estimasi" ? "true" : "false");
+        el("tabTagihan").setAttribute("aria-selected", mode === "tagihan" ? "true" : "false");
+        el("modeEstimasi").hidden = mode !== "estimasi";
+        el("modeTagihan").hidden = mode !== "tagihan";
+        el("receiptEst").hidden = mode !== "estimasi";
+        el("receiptBill").hidden = mode !== "tagihan";
+        var scroller = el("scrollArea");
+        if (scroller) scroller.scrollTop = 0;
+      }
+      el("tabEstimasi").addEventListener("click", function () { setMode("estimasi"); });
+      el("tabTagihan").addEventListener("click", function () { setMode("tagihan"); });
+
+      /* ================= MODE ESTIMASI ================= */
+      function renderKatalog() {
+        var items = itemUntukMotor();
+        var html = "";
+        KATEGORI_URUTAN.forEach(function (kat) {
+          var grup = items.filter(function (it) { return it.kategori === kat; });
+          if (!grup.length) return;
+          html += '<h3 class="cat-title">' + kat + ' <span class="cat-count">' + grup.length + ' layanan</span></h3>';
+          html += '<div class="svc-list">';
+          grup.forEach(function (it) {
+            var checked = state.dipilih[it.id] ? " checked" : "";
+            html += '<label class="svc-card">' +
+              '<input type="checkbox" data-svc="' + it.id + '"' + checked + ' />' +
+              '<span class="svc-body">' +
+                '<span class="svc-name">' + it.nama + '</span>' +
+                '<span class="svc-range" style="display:block">' + rpRange(it.min, it.max) + '</span>' +
+                '<span class="svc-note" style="display:block">' + it.catatan + '</span>' +
+              '</span></label>';
+          });
+          html += "</div>";
+        });
+        katalogEl.innerHTML = html;
+        Array.prototype.forEach.call(katalogEl.querySelectorAll("input[data-svc]"), function (cb) {
+          cb.addEventListener("change", function () {
+            if (cb.checked) state.dipilih[cb.getAttribute("data-svc")] = true;
+            else delete state.dipilih[cb.getAttribute("data-svc")];
+            updateEstimasi(false);
+          });
+        });
+      }
+
+      /* count-up total estimasi */
+      var tampilMin = 0, tampilMax = 0, rafId = null;
+      function updateEstimasi(reset) {
+        var items = itemUntukMotor().filter(function (it) { return state.dipilih[it.id]; });
+        var btn = el("btnSalinBekal");
+        if (!items.length) {
+          el("estEmpty").hidden = false;
+          el("estBody").hidden = true;
+          btn.hidden = true;
+          tampilMin = 0; tampilMax = 0;
+          return;
+        }
+        var totMin = 0, totMax = 0;
+        items.forEach(function (it) { totMin += it.min; totMax += it.max; });
+        el("estEmpty").hidden = true;
+        el("estBody").hidden = false;
+        btn.hidden = false;
+        el("estCount").textContent = items.length + " layanan dipilih · motor " + MOTOR_LABEL[state.motor];
+        if (reset || reducedMotion) {
+          if (rafId) cancelAnimationFrame(rafId);
+          tampilMin = totMin; tampilMax = totMax;
+          el("estTotal").textContent = rpRange(tampilMin, tampilMax);
+          return;
+        }
+        var dariMin = tampilMin, dariMax = tampilMax;
+        var mulai = null;
+        if (rafId) cancelAnimationFrame(rafId);
+        function langkah(ts) {
+          if (mulai === null) mulai = ts;
+          var p = Math.min(1, (ts - mulai) / 600);
+          var e = 1 - Math.pow(1 - p, 3);
+          tampilMin = Math.round(dariMin + (totMin - dariMin) * e);
+          tampilMax = Math.round(dariMax + (totMax - dariMax) * e);
+          el("estTotal").textContent = rpRange(tampilMin, tampilMax);
+          if (p < 1) rafId = requestAnimationFrame(langkah);
+        }
+        rafId = requestAnimationFrame(langkah);
+      }
+
+      /* ================= MODE CEK TAGIHAN ================= */
+      function renderBillSelect() {
+        var items = itemUntukMotor();
+        var html = "";
+        KATEGORI_URUTAN.forEach(function (kat) {
+          var grup = items.filter(function (it) { return it.kategori === kat; });
+          if (!grup.length) return;
+          html += '<optgroup label="' + kat + '">';
+          grup.forEach(function (it) {
+            html += '<option value="' + it.id + '">' + it.nama + " (" + rpRange(it.min, it.max) + ")</option>";
+          });
+          html += "</optgroup>";
+        });
+        billSelect.innerHTML = html;
+      }
+
+      /* format ribuan otomatis saat mengetik */
+      billPrice.addEventListener("input", function () {
+        var n = parseRupiah(billPrice.value);
+        billPrice.value = isNaN(n) ? "" : nfID.format(n);
+        billErr.classList.remove("show");
+      });
+
+      el("billForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var harga = parseRupiah(billPrice.value);
+        if (isNaN(harga) || harga <= 0) {
+          billErr.textContent = "Isi dulu harga yang ditagih bengkel, dalam Rupiah.";
+          billErr.classList.add("show");
+          billPrice.focus();
+          return;
+        }
+        state.tagihan.push({ id: billSelect.value, harga: harga });
+        billPrice.value = "";
+        renderTagihan(true);
+        billPrice.focus();
+      });
+
+      function renderTagihan(animasiStamp) {
+        var btn = el("btnSalinHasil");
+        if (!state.tagihan.length) {
+          billList.innerHTML = "";
+          el("billEmpty").hidden = false;
+          el("billBody").hidden = true;
+          btn.hidden = true;
+          return;
+        }
+        var html = "";
+        var totalDitagih = 0, totMin = 0, totMax = 0, daftarNilai = [];
+        state.tagihan.forEach(function (row, idx) {
+          var it = itemById(row.id);
+          if (!it) return;
+          var nilai = nilaiKewajaran(row.harga, it.min, it.max);
+          var info = VERDICT_INFO[nilai];
+          daftarNilai.push(nilai);
+          totalDitagih += row.harga; totMin += it.min; totMax += it.max;
+          html += '<div class="bill-item">' +
+            '<div class="bill-top">' +
+              '<span class="bill-name">' + it.nama + '</span>' +
+              '<span class="bill-price">' + rp(row.harga) + '</span>' +
+              '<button type="button" class="bill-del" data-del="' + idx + '" aria-label="Hapus ' + it.nama + '">' +
+                '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
+              '</button>' +
+            '</div>' +
+            '<div class="bill-meta">' +
+              '<span class="badge ' + info.kelas + ' pop">' + info.label + '</span>' +
+              '<span class="bill-fair">wajar: ' + rpRange(it.min, it.max) + '</span>' +
+            '</div>' +
+            '<p class="bill-note">' + info.note + '</p>' +
+          '</div>';
+        });
+        billList.innerHTML = html;
+        Array.prototype.forEach.call(billList.querySelectorAll("[data-del]"), function (b) {
+          b.addEventListener("click", function () {
+            state.tagihan.splice(parseInt(b.getAttribute("data-del"), 10), 1);
+            renderTagihan(true);
+          });
+        });
+
+        el("billEmpty").hidden = true;
+        el("billBody").hidden = false;
+        btn.hidden = false;
+        el("billTotal").textContent = rp(totalDitagih);
+        el("billFair").textContent = rpRange(totMin, totMax);
+        var verdict = verdictKeseluruhan(daftarNilai);
+        var kelas = verdict === "DITEMBAK!" ? "ditembak" : (verdict === "WASPADA" ? "waspada" : "wajar");
+        var sub = verdict === "DITEMBAK!" ? "ada item kemahalan" : (verdict === "WASPADA" ? "ada item agak mahal" : "semua dalam batas wajar");
+        el("stampZone").innerHTML =
+          '<div class="stamp ' + kelas + (animasiStamp && !reducedMotion ? " animate" : "") + '" role="status">' +
+            verdict + "<small>" + sub + "</small>" +
+          "</div>";
+      }
+
+      /* ================= SALIN ================= */
+      function salinTeks(teks, btn, labelAsli) {
+        function sukses() {
+          var span = btn.querySelector("span");
+          btn.classList.add("done");
+          span.textContent = "Tersalin!";
+          setTimeout(function () { btn.classList.remove("done"); span.textContent = labelAsli; }, 1800);
+        }
+        function gagal() {
+          var span = btn.querySelector("span");
+          span.textContent = "Gagal menyalin";
+          setTimeout(function () { span.textContent = labelAsli; }, 1800);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(teks).then(sukses, function () { salinFallback(teks, sukses, gagal); });
+        } else {
+          salinFallback(teks, sukses, gagal);
+        }
+      }
+      function salinFallback(teks, sukses, gagal) {
+        try {
+          var ta = document.createElement("textarea");
+          ta.value = teks;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          var ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+          if (ok) sukses(); else gagal();
+        } catch (e) { gagal(); }
+      }
+
+      el("btnSalinBekal").addEventListener("click", function () {
+        var items = itemUntukMotor().filter(function (it) { return state.dipilih[it.id]; });
+        if (!items.length) return;
+        var totMin = 0, totMax = 0;
+        var lines = ["BengkelCheck — Bekal servis motor " + MOTOR_LABEL[state.motor], ""];
+        items.forEach(function (it) {
+          totMin += it.min; totMax += it.max;
+          lines.push("- " + it.nama + ": " + rpRange(it.min, it.max));
+        });
+        lines.push("");
+        lines.push("Total harga wajar: " + rpRange(totMin, totMax));
+        lines.push("Estimasi Jabodetabek 2026, bengkel umum. Bahan nego, bukan vonis.");
+        salinTeks(lines.join("\n"), this, "Salin bekal");
+      });
+
+      el("btnSalinHasil").addEventListener("click", function () {
+        if (!state.tagihan.length) return;
+        var totalDitagih = 0, totMin = 0, totMax = 0, daftarNilai = [];
+        var lines = ["BengkelCheck — Hasil cek tagihan motor " + MOTOR_LABEL[state.motor], ""];
+        state.tagihan.forEach(function (row) {
+          var it = itemById(row.id);
+          if (!it) return;
+          var nilai = nilaiKewajaran(row.harga, it.min, it.max);
+          daftarNilai.push(nilai);
+          totalDitagih += row.harga; totMin += it.min; totMax += it.max;
+          lines.push("- " + it.nama + ": ditagih " + rp(row.harga) + " (wajar " + rpRange(it.min, it.max) + ") → " + VERDICT_INFO[nilai].label);
+        });
+        lines.push("");
+        lines.push("Total ditagih: " + rp(totalDitagih));
+        lines.push("Rentang wajar: " + rpRange(totMin, totMax));
+        lines.push("Verdict: " + verdictKeseluruhan(daftarNilai));
+        lines.push("Estimasi Jabodetabek 2026, bengkel umum. Bahan nego, bukan vonis.");
+        salinTeks(lines.join("\n"), this, "Salin hasil");
+      });
+
+      /* ================= INIT ================= */
+      /* Panel struk dipindah ke dock bawah (tidak melayang di atas konten) */
+      var dockEl = el("dock");
+      dockEl.appendChild(el("receiptEst"));
+      dockEl.appendChild(el("receiptBill"));
+      renderMotor();
+      renderKatalog();
+      renderBillSelect();
+      renderTagihan(false);
+      updateEstimasi(true);
+      setMode("estimasi");
+    </script>
+  </body>
+</html>
